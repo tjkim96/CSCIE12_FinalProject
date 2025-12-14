@@ -1,106 +1,51 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import coffee from "../data/coffee.json";
+
+// Build a count per country
+const countryCounts = {};
+for (const c of coffee) {
+	const country = c?.Location?.Country;
+	if (!country) continue;
+	countryCounts[country] = (countryCounts[country] ?? 0) + 1;
+}
+
+// Unique countries, sorted
+const countries = Object.keys(countryCounts).sort((a, b) => a.localeCompare(b));
 ---
 
-<Layout title="Coffee Dataset">
-	<h1>Coffee Entries</h1>
+<Layout title="Coffee by Country">
+	<h1>Browse Coffees by Country</h1>
 
-	<div class="grid">
+	<ul class="country-list">
 		{
-			coffee.map((c) => {
-				const country = c?.Location?.Country ?? "Unknown";
-				const region = c?.Location?.Region ?? "Unknown";
-				const year = c?.Year ?? "Unknown";
-				const owner = c?.Data?.Owner ?? "Unknown";
-				const species = c?.Data?.Type?.Species ?? "Unknown";
-				const total = c?.Data?.Scores?.Total ?? "Unknown";
-
-				return (
-					<article class="card">
-						<header class="card-header">
-							<h2 class="place">{country}</h2>
-							<p class="region">{region}</p>
-						</header>
-
-						<dl class="meta">
-							<div>
-								<dt>Year</dt>
-								<dd>{year}</dd>
-							</div>
-							<div>
-								<dt>Owner</dt>
-								<dd>{owner}</dd>
-							</div>
-							<div>
-								<dt>Species</dt>
-								<dd>{species}</dd>
-							</div>
-							<div>
-								<dt>Total Score</dt>
-								<dd>{total}</dd>
-							</div>
-						</dl>
-					</article>
-				);
-			})
+			countries.map((country) => (
+				<li>
+					<a href={`/countries/${encodeURIComponent(country)}`}>
+						{country}{" "}
+						<span class="count">
+							({countryCounts[country]} coffees)
+						</span>
+					</a>
+				</li>
+			))
 		}
-	</div>
+	</ul>
 </Layout>
 
 <style>
-	h1 {
-		margin-top: 2rem;
-		margin-bottom: 1rem;
-	}
-
-	/* Flexible grid */
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-		gap: 1rem;
-		align-items: stretch;
-	}
-
-	.card {
-		border: 1px solid #ddd;
-		border-radius: 12px;
-		padding: 1rem;
-		background: white;
-	}
-
-	.card-header {
-		margin-bottom: 0.75rem;
-	}
-
-	.place {
+	.country-list {
+		columns: 18rem;
+		list-style: none;
+		padding: 0;
 		margin: 0;
-		font-size: 1.1rem;
 	}
 
-	.region {
-		margin: 0.25rem 0 0;
+	.country-list li {
+		margin-bottom: 0.55rem;
+	}
+
+	.count {
 		color: #444;
-	}
-
-	/* Label/value layout */
-	.meta {
-		margin: 0;
-		display: grid;
-		gap: 0.6rem;
-	}
-
-	.meta > div {
-		display: grid;
-		grid-template-columns: 110px 1fr;
-		gap: 0.75rem;
-	}
-
-	dt {
-		font-weight: bold;
-	}
-
-	dd {
-		margin: 0;
 	}
 </style>

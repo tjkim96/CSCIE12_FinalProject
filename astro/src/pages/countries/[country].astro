@@ -1,0 +1,141 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import coffee from "../../data/coffee.json";
+
+export function getStaticPaths() {
+    const countries = [
+        ...new Set(coffee.map((c) => c?.Location?.Country).filter(Boolean)),
+    ];
+
+    // IMPORTANT: params should be RAW values (NOT encodeURIComponent)
+    return countries.map((country) => ({
+        params: { country },
+    }));
+}
+
+// Astro.params.country will correspond to the URL segment.
+// Decode just in case (safe for dev + prod).
+const countryParam = decodeURIComponent(Astro.params.country);
+
+// Normalize for comparisons
+const selectedCountry = countryParam.trim();
+
+const coffeesByCountry = coffee
+    .filter((c) => (c?.Location?.Country ?? "").trim() === selectedCountry)
+    .sort((a, b) => {
+        const aScore =
+            typeof a?.Data?.Scores?.Total === "number"
+                ? a.Data.Scores.Total
+                : -Infinity;
+        const bScore =
+            typeof b?.Data?.Scores?.Total === "number"
+                ? b.Data.Scores.Total
+                : -Infinity;
+        return bScore - aScore;
+    });
+
+const count = coffeesByCountry.length;
+---
+
+<Layout title={selectedCountry}>
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a> &rarr; <span>{selectedCountry}</span>
+    </nav>
+
+    <p class="back-link">
+        <a href="/">← Back to countries</a>
+    </p>
+
+    <h1>{selectedCountry} <span class="subtitle">({count} coffees)</span></h1>
+    <p class="note">Sorted by Total Score (high → low).</p>
+
+    <div class="grid">
+        {
+            coffeesByCountry.map((c) => (
+                <article class="card">
+                    <h2 class="region">{c?.Location?.Region ?? "Unknown"}</h2>
+                    <dl class="meta">
+                        <div>
+                            <>
+                                <dt>Year</dt>
+                                <dd>{c?.Year ?? "Unknown"}</dd>
+                            </>
+                        </div>
+                        <div>
+                            <>
+                                <dt>Owner</dt>
+                                <dd>{c?.Data?.Owner ?? "Unknown"}</dd>
+                            </>
+                        </div>
+                        <div>
+                            <>
+                                <dt>Species</dt>
+                                <dd>{c?.Data?.Type?.Species ?? "Unknown"}</dd>
+                            </>
+                        </div>
+                        <div>
+                            <>
+                                <dt>Total Score</dt>
+                                <dd>{c?.Data?.Scores?.Total ?? "Unknown"}</dd>
+                            </>
+                        </div>
+                    </dl>
+                </article>
+            ))
+        }
+    </div>
+</Layout>
+
+<style>
+    .breadcrumbs {
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    .back-link {
+        margin: 0 0 1rem 0;
+    }
+    .subtitle {
+        font-size: 1rem;
+        font-weight: normal;
+        color: #444;
+    }
+    .note {
+        margin-top: 0;
+        color: #444;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 1rem;
+        background: white;
+    }
+    .region {
+        margin: 0 0 0.75rem 0;
+        font-size: 1.1rem;
+    }
+
+    .meta {
+        margin: 0;
+        display: grid;
+        gap: 0.6rem;
+    }
+    .meta > div {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 0.75rem;
+    }
+    dt {
+        font-weight: bold;
+    }
+    dd {
+        margin: 0;
+    }
+</style>
