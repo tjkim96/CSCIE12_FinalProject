@@ -3,173 +3,307 @@ import Layout from "../../layouts/Layout.astro";
 import coffee from "../../data/coffee.json";
 
 export function getStaticPaths() {
-    const countries = [
-        ...new Set(coffee.map((c) => c?.Location?.Country).filter(Boolean)),
-    ];
+  const countries = [
+    ...new Set(coffee.map((c) => c?.Location?.Country).filter(Boolean)),
+  ];
 
-    // IMPORTANT: params should be RAW values (NOT encodeURIComponent)
-    return countries.map((country) => ({
-        params: { country },
-    }));
+  return countries.map((country) => ({
+    params: { country },
+  }));
 }
 
-// Astro.params.country will correspond to the URL segment.
-// Decode just in case (safe for dev + prod).
 const countryParam = decodeURIComponent(Astro.params.country);
 
-// Normalize for comparisons
+// Truncate some of the whitespaces in the country names
 const selectedCountry = countryParam.trim();
 
+// Find the right coffees based on country, then sort them based on score
 const coffeesByCountry = coffee
-    .filter((c) => (c?.Location?.Country ?? "").trim() === selectedCountry)
-    .sort((a, b) => {
-        const aScore =
-            typeof a?.Data?.Scores?.Total === "number"
-                ? a.Data.Scores.Total
-                : -Infinity;
-        const bScore =
-            typeof b?.Data?.Scores?.Total === "number"
-                ? b.Data.Scores.Total
-                : -Infinity;
-        return bScore - aScore;
-    });
+  .filter((c) => (c?.Location?.Country ?? "").trim() === selectedCountry)
+  .sort((a, b) => {
+    const aScore =
+      typeof a?.Data?.Scores?.Total === "number" ? a.Data.Scores.Total : -Infinity;
+    const bScore =
+      typeof b?.Data?.Scores?.Total === "number" ? b.Data.Scores.Total : -Infinity;
+    return bScore - aScore;
+  });
 
+// Get the number of coffees per country
 const count = coffeesByCountry.length;
+
+// The start of my shoddy password implementation for the USA data
+const PROTECTED_COUNTRY = "United States";
+const isProtected = selectedCountry === PROTECTED_COUNTRY;
 ---
 
 <Layout title="Coffee Ratings Dataset">
+  <div class:list={["protected-content", isProtected ? "is-protected" : ""]} id="protectedContent">
     <h1>{selectedCountry} <span class="subtitle">({count} coffees)</span></h1>
     <p class="note">Sorted by Total Score (high → low).</p>
 
     <div class="grid">
-        {
-            coffeesByCountry.map((c) => (
-                <article class="card">
-                    <h2 class="region">{c?.Location?.Region ?? "Unknown"}</h2>
-                    <dl class="meta">
-                        <div>
-                            <dt>Year</dt>
-                            <dd>{c?.Year ?? "Unknown"}</dd>
-                        </div>
-                        <div>
-                            <dt>Owner</dt>
-                            <dd>{c?.Data?.Owner ?? "Unknown"}</dd>
-                        </div>
-                        <div>
-                            <dt>Species</dt>
-                            <dd>{c?.Data?.Type?.Species ?? "Unknown"}</dd>
-                        </div>
-                        <div>
-                            <dt>Total Score</dt>
-                            <dd>{c?.Data?.Scores?.Total ?? "Unknown"}</dd>
-                        </div>
-                    </dl>
-                </article>
-            ))
-        }
+      {
+        coffeesByCountry.map((c) => (
+          <article class="card">
+            <h2 class="region">{c?.Location?.Region ?? "Unknown"}</h2>
+            <dl class="meta">
+              <div>
+                <dt>Year</dt>
+                <dd>{c?.Year ?? "Unknown"}</dd>
+              </div>
+              <div>
+                <dt>Owner</dt>
+                <dd>{c?.Data?.Owner ?? "Unknown"}</dd>
+              </div>
+              <div>
+                <dt>Species</dt>
+                <dd>{c?.Data?.Type?.Species ?? "Unknown"}</dd>
+              </div>
+              <div>
+                <dt>Total Score</dt>
+                <dd>{c?.Data?.Scores?.Total ?? "Unknown"}</dd>
+              </div>
+            </dl>
+          </article>
+        ))
+      }
     </div>
+  </div>
+
+  {isProtected && (
+    <dialog id="pwDialog" class="pwDialog">
+      <form class="pwCard" id="pwForm">
+        <h2>Enter password</h2>
+        <p>USA data is protected. Press ESC to exit.</p>
+
+        <input
+          id="pwInput"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+        />
+
+        <div class="pwButtons">
+          <button id="pwSubmit" type="submit">Unlock</button>
+        </div>
+
+        <p id="pwError" class="pwError" aria-live="polite"></p>
+      </form>
+    </dialog>
+  )}
+
+  {isProtected && (
+    <script is:inline>
+  const PASSWORD = "myPassword";
+
+  // Make dialog box for the password 
+  const dialog = document.getElementById("pwDialog");
+  const form = document.getElementById("pwForm");
+  const input = document.getElementById("pwInput");
+  const error = document.getElementById("pwError");
+  const content = document.getElementById("protectedContent");
+
+  function setUnlocked(unlocked) {
+    if (unlocked) {
+      content?.classList.add("unlocked");
+      if (dialog?.open) dialog.close();
+    } else {
+      content?.classList.remove("unlocked");
+      error.textContent = "";
+      if (input) input.value = "";
+      if (dialog && !dialog.open) dialog.showModal();
+      input?.focus();
+    }
+  }
+
+  // Force password entry on every USA page load
+  setUnlocked(false);
+
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    error.textContent = "";
+
+    if (input?.value === PASSWORD) setUnlocked(true);
+    else {
+      error.textContent = "Incorrect password.";
+      input?.select();
+      input?.focus();
+    }
+  });
+
+</script>
+
+  )}
 </Layout>
 
 <style>
-    .subtitle {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #4a3426;
-    }
+  .subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4a3426;
+  }
 
-    .note {
-        margin-top: 0.25rem;
-        color: #4a3426;
-        font-size: 1rem;
-    }
+  .note {
+    margin-top: 0.25rem;
+    color: #4a3426;
+    font-size: 1rem;
+  }
 
-    /* Grid spacing */
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 1.25rem;
-        margin-top: 1.25rem;
-    }
+  /* Grid spacing */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+  }
 
-    /* Coffee-themed card: “label on paper” */
-    .card {
-        background: linear-gradient(180deg, #ffffff, #fff7ee);
-        border: 1px solid #ead7c3;
-        border-radius: 16px;
-        padding: 1.1rem 1.15rem;
-        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
-        transition:
-            transform 120ms ease,
-            box-shadow 120ms ease;
-        position: relative;
-    }
+  /* Coffee-themed cards styling */
+  .card {
+    background: linear-gradient(180deg, #ffffff, #fff7ee);
+    border: 1px solid #ead7c3;
+    border-radius: 16px;
+    padding: 1.1rem 1.15rem;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease;
+    position: relative;
+  }
 
-    /* Small “bean” accent bar */
-    .card::before {
-        content: "";
-        display: block;
-        height: 6px;
-        border-radius: 999px;
-        margin-bottom: 0.9rem;
-        background: linear-gradient(90deg, #6f4e37, #c28b64, #6f4e37);
-        opacity: 0.9;
-    }
+  .card::before {
+    content: "";
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    margin-bottom: 0.9rem;
+    background: linear-gradient(90deg, #6f4e37, #c28b64, #6f4e37);
+    opacity: 0.9;
+  }
 
-    /* Hover “lift” */
-    .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
-    }
+  /* Hovering over cards */
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
+  }
 
-    /* Region title */
-    .region {
-        margin: 0 0 0.75rem 0;
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: #2b1b12; /* espresso */
-        text-transform: capitalize;
-    }
+  /* Region title */
+  .region {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #2b1b12; /* espresso */
+    text-transform: capitalize;
+  }
 
-    /* Definition list */
-    .meta {
-        margin: 0;
-        display: grid;
-        gap: 0.65rem;
-    }
+  /* Definitions */
+  .meta {
+    margin: 0;
+    display: grid;
+    gap: 0.65rem;
+  }
 
+  .meta > div {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 0.9rem;
+    align-items: baseline;
+  }
+
+  /* Labels */
+  dt {
+    font-weight: 800;
+    color: #6f4e37; /* mocha */
+    letter-spacing: 0.02em;
+  }
+
+  /* Values */
+  dd {
+    margin: 0;
+    color: #3a2416;
+    overflow-wrap: anywhere; /* helps long owner names */
+  }
+
+  /* Some polish */
+  h1 {
+    margin-bottom: 0.25rem;
+    font-size: 2.2rem;
+    letter-spacing: -0.02em;
+    color: #2b1b12;
+  }
+
+  @media (max-width: 700px) {
     .meta > div {
-        display: grid;
-        grid-template-columns: 110px 1fr;
-        gap: 0.9rem;
-        align-items: baseline;
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
     }
+  }
 
-    /* Labels: “tasting notes” look */
-    dt {
-        font-weight: 800;
-        color: #6f4e37; /* mocha */
-        letter-spacing: 0.02em;
-    }
+  /* Password entry styling */
 
-    /* Values */
-    dd {
-        margin: 0;
-        color: #3a2416;
-        overflow-wrap: anywhere; /* helps long owner names */
-    }
+  /* Hide protected content until unlocked */
+  .protected-content.is-protected {
+    display: none;
+  }
+  .protected-content.is-protected.unlocked {
+    display: block;
+  }
 
-    /* Page heading polish */
-    h1 {
-        margin-bottom: 0.25rem;
-        font-size: 2.2rem;
-        letter-spacing: -0.02em;
-        color: #2b1b12;
-    }
+  /* Dialog styling */
+  .pwDialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
 
-    @media (max-width: 700px) {
-        .meta > div {
-            grid-template-columns: 1fr;
-            gap: 0.25rem;
-        }
-    }
+  .pwDialog {
+    border: none;
+    padding: 0;
+    border-radius: 16px;
+    max-width: 420px;
+    width: calc(100% - 2rem);
+  }
+
+  .pwCard {
+    padding: 1.1rem 1.2rem;
+    background: white;
+    border-radius: 16px;
+  }
+
+  .pwCard h2 {
+    margin: 0 0 0.25rem 0;
+    color: #2b1b12;
+  }
+
+  .pwCard p {
+    margin: 0.25rem 0 0.75rem 0;
+    color: #4a3426;
+  }
+
+  .pwCard input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    margin-top: 0.25rem;
+  }
+
+  .pwButtons {
+    margin-top: 0.8rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .pwButtons button {
+    padding: 0.6rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+  }
+
+  .pwError {
+    margin-top: 0.6rem;
+    color: #b00020;
+    font-weight: 700;
+    min-height: 1.2em;
+  }
 </style>

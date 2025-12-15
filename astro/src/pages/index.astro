@@ -6,13 +6,21 @@ import Layout from "../layouts/Layout.astro";
 	<h1>Homepage</h1>
 
 	<p>
-		This website explores a coffee ratings dataset from <a
-			href="https://corgis-edu.github.io/corgis/json/coffee/">here</a
-		>. You can browse coffees by country and view details like region, year,
-		owner, species, and total score. Data procured
+		Welcome! This website explores a coffee ratings dataset from
+		<a href="...">here</a>.
 	</p>
 
-	<h2>Dataset fields</h2>
+	<p>
+		You can browse coffees by country and view details like region, year,
+		owner, species, and total score.
+	</p>
+
+	<p>
+		The USA data is password-protected for demonstration purposes. The
+		correct password is <code>myPassword</code>.
+	</p>
+
+	<h2>JSON Dataset fields</h2>
 
 	<dl class="fields">
 		<div>
@@ -54,14 +62,6 @@ import Layout from "../layouts/Layout.astro";
 </Layout>
 
 <style>
-	.cta {
-		display: inline-block;
-		margin-top: 0.5rem;
-		padding: 0.6rem 0.9rem;
-		border: 1px solid #ddd;
-		border-radius: 10px;
-	}
-
 	.fields {
 		margin: 1rem 0 0 0;
 		display: grid;
