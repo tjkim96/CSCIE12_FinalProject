@@ -1,5 +1,6 @@
 ---
 const { title = "Coffee" } = Astro.props;
+const path = Astro.url.pathname;
 ---
 
 <!doctype html>
@@ -16,15 +17,23 @@ const { title = "Coffee" } = Astro.props;
     <header>
       <div class="logo">{title}</div>
 
-      <nav>
-        <ol>
-          <li>
-            <a href="/">Home</a> &rarr;
-          </li>
-          <li>
-            <a href="#">{title}</a>
-          </li>
-        </ol>
+      <!-- Make toolbar -->
+      <nav class="toolbar" aria-label="Main navigation">
+        <a
+          class="tab"
+          href="/"
+          aria-current={path === "/" ? "page" : undefined}
+        >
+          Home
+        </a>
+
+        <a
+          class="tab"
+          href="/countries"
+          aria-current={path.startsWith("/countries") ? "page" : undefined}
+        >
+          Browse Coffees By Country
+        </a>
       </nav>
     </header>
 
@@ -34,7 +43,8 @@ const { title = "Coffee" } = Astro.props;
 
     <footer>
       This work is part of the Final Project for the course CSCI E-12, Fall
-      2025, taught at <a href="https://extension.harvard.edu/"
+      2025, taught at
+      <a href="https://extension.harvard.edu/"
         >Harvard University Extension School</a
       >
       by David Heitmeyer. Authored by Jaisohn Kim.
@@ -43,13 +53,33 @@ const { title = "Coffee" } = Astro.props;
 </html>
 
 <style>
+  :root {
+    --latte: #fbf6ef;
+    --cream: #fff7ee;
+    --paper: #ffffff;
+    --espresso: #2b1b12;
+    --mocha: #6f4e37;
+    --cocoa: #8b5e3c;
+    --border: #ead7c3;
+    --shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  }
+
   * {
     box-sizing: border-box;
   }
 
   body {
-    font-family: arial, helvetica, sans-serif;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      Arial,
+      sans-serif;
     margin: 0;
+    background: var(--latte);
+    color: var(--espresso);
   }
 
   header,
@@ -65,35 +95,65 @@ const { title = "Coffee" } = Astro.props;
 
   header .logo {
     font-size: 3rem;
-    font-weight: bold;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     line-height: 1.1;
+    margin-bottom: 1.25rem;
+    color: var(--espresso);
   }
 
-  header nav {
-    padding-top: 0.5rem;
-  }
-
-  header nav ol {
-    list-style: none;
+  /* Toolbar */
+  .toolbar {
+    background: linear-gradient(180deg, var(--mocha), #5d3f2c);
+    padding: 0.85rem 1.1rem;
     display: flex;
-    padding: 0;
-    margin: 0;
-    gap: 0.25rem;
+    gap: 2rem;
+    align-items: center;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
   }
 
-  a:link,
-  a:visited,
-  a:hover,
-  a:active {
+  .toolbar .tab:link,
+  .toolbar .tab:visited {
+    color: #fff;
     text-decoration: none;
-    color: blue;
+    font-size: 1.05rem;
+    padding: 0.25rem 0.1rem;
+  }
+
+  .toolbar .tab:hover {
+    text-decoration: underline;
+  }
+
+  .toolbar .tab[aria-current="page"] {
+    font-weight: 800;
+    text-decoration: underline;
+  }
+
+  /* Content + footer links (keep coffee brown) */
+  main a:link,
+  main a:visited,
+  main a:hover,
+  main a:active,
+  footer a:link,
+  footer a:visited,
+  footer a:hover,
+  footer a:active {
+    text-decoration: none;
+    color: var(--mocha);
+  }
+
+  main a:hover,
+  footer a:hover {
+    text-decoration: underline;
   }
 
   footer {
     margin-top: 4rem;
-    border-top: thin solid black;
+    border-top: 1px solid var(--border);
     padding-top: 2rem;
     padding-bottom: 2rem;
+    color: #4a3426;
   }
 
   @media (max-width: 700px) {
@@ -106,6 +166,11 @@ const { title = "Coffee" } = Astro.props;
 
     header .logo {
       font-size: 2rem;
+    }
+
+    .toolbar {
+      flex-wrap: wrap;
+      gap: 1rem;
     }
   }
 </style>

@@ -1,0 +1,55 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import coffee from "../../data/coffee.json";
+
+const countryCounts: Record<string, number> = {};
+for (const c of coffee) {
+    const country = c?.Location?.Country;
+    if (!country) continue;
+    countryCounts[country] = (countryCounts[country] ?? 0) + 1;
+}
+
+const countries = Object.keys(countryCounts).sort((a, b) => a.localeCompare(b));
+---
+
+<Layout title="Coffee Ratings Dataset">
+    <h1>Browse Coffees by Country</h1>
+
+    <ul class="country-list">
+        {
+            countries.map((country) => (
+                <li>
+                    <a href={`/countries/${encodeURIComponent(country)}`}>
+                        {country}{" "}
+                        <span class="count">
+                            ({countryCounts[country]} coffees)
+                        </span>
+                    </a>
+                </li>
+            ))
+        }
+    </ul>
+</Layout>
+
+<style>
+    .breadcrumbs {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .country-list {
+        columns: 18rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .country-list li {
+        margin-bottom: 0.55rem;
+    }
+
+    .count {
+        color: #444;
+    }
+</style>

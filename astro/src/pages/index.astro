@@ -1,51 +1,83 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import coffee from "../data/coffee.json";
-
-// Build a count per country
-const countryCounts = {};
-for (const c of coffee) {
-	const country = c?.Location?.Country;
-	if (!country) continue;
-	countryCounts[country] = (countryCounts[country] ?? 0) + 1;
-}
-
-// Unique countries, sorted
-const countries = Object.keys(countryCounts).sort((a, b) => a.localeCompare(b));
 ---
 
-<Layout title="Coffee by Country">
-	<h1>Browse Coffees by Country</h1>
+<Layout title="Coffee Ratings Dataset">
+	<h1>Homepage</h1>
 
-	<ul class="country-list">
-		{
-			countries.map((country) => (
-				<li>
-					<a href={`/countries/${encodeURIComponent(country)}`}>
-						{country}{" "}
-						<span class="count">
-							({countryCounts[country]} coffees)
-						</span>
-					</a>
-				</li>
-			))
-		}
-	</ul>
+	<p>
+		This website explores a coffee ratings dataset from <a
+			href="https://corgis-edu.github.io/corgis/json/coffee/">here</a
+		>. You can browse coffees by country and view details like region, year,
+		owner, species, and total score. Data procured
+	</p>
+
+	<h2>Dataset fields</h2>
+
+	<dl class="fields">
+		<div>
+			<dt>Year</dt>
+			<dd>Production year.</dd>
+		</div>
+
+		<div>
+			<dt>Location.Country</dt>
+			<dd>Country where the coffee was produced.</dd>
+		</div>
+
+		<div>
+			<dt>Location.Region</dt>
+			<dd>A more specific region within the country.</dd>
+		</div>
+
+		<div>
+			<dt>Data.Owner</dt>
+			<dd>The producer/owner associated with the coffee.</dd>
+		</div>
+
+		<div>
+			<dt>Data.Type.Species</dt>
+			<dd>The coffee species (e.g., Arabica).</dd>
+		</div>
+
+		<div>
+			<dt>Data.Scores.Total</dt>
+			<dd>The total quality score for the coffee.</dd>
+		</div>
+
+		<p>
+			The Total Score is computed as the sum of these components (10 pts
+			each; 90 pts total):
+			Aroma+Flavor+Aftertaste+Acidity+Body+Balance+Uniformity+Sweetness+Moisture
+		</p>
+	</dl>
 </Layout>
 
 <style>
-	.country-list {
-		columns: 18rem;
-		list-style: none;
-		padding: 0;
+	.cta {
+		display: inline-block;
+		margin-top: 0.5rem;
+		padding: 0.6rem 0.9rem;
+		border: 1px solid #ddd;
+		border-radius: 10px;
+	}
+
+	.fields {
+		margin: 1rem 0 0 0;
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.fields > div {
+		display: grid;
+		grid-template-columns: 180px 1fr;
+		gap: 1rem;
+	}
+
+	dt {
+		font-weight: bold;
+	}
+	dd {
 		margin: 0;
-	}
-
-	.country-list li {
-		margin-bottom: 0.55rem;
-	}
-
-	.count {
-		color: #444;
 	}
 </style>
